@@ -20,8 +20,12 @@ function requiresApiAuth(pathname: string, method: string) {
   return false;
 }
 
-function isAdminRoute(pathname: string) {
+function isAdminApiRoute(pathname: string) {
   return pathname.startsWith("/api/admin/");
+}
+
+function isAdminPageRoute(pathname: string) {
+  return pathname.startsWith("/admin");
 }
 
 function pickLimiter(pathname: string) {
@@ -51,7 +55,7 @@ export default auth(async (req) => {
   const isAuthed = !!req.auth;
   const role = req.auth?.user?.role;
 
-  if (isAdminRoute(pathname)) {
+  if (isAdminApiRoute(pathname)) {
     if (!isAuthed) {
       return NextResponse.json(
         { data: null, error: { message: "Authentication required." } },
@@ -63,6 +67,18 @@ export default auth(async (req) => {
         { data: null, error: { message: "Forbidden." } },
         { status: 403 },
       );
+    }
+    return NextResponse.next();
+  }
+
+  if (isAdminPageRoute(pathname)) {
+    if (!isAuthed) {
+      const loginUrl = new URL("/auth/login", nextUrl);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (role !== "moderator" && role !== "admin") {
+      return NextResponse.redirect(new URL("/", nextUrl));
     }
     return NextResponse.next();
   }
@@ -84,5 +100,11 @@ export default auth(async (req) => {
 });
 
 export const config = {
-  matcher: ["/report/:path*", "/profile/me/:path*", "/settings/:path*", "/api/:path*"],
+  matcher: [
+    "/report/:path*",
+    "/profile/me/:path*",
+    "/settings/:path*",
+    "/admin/:path*",
+    "/api/:path*",
+  ],
 };

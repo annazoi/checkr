@@ -17,6 +17,8 @@ export function TopNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <header className="sticky top-0 z-40 hidden border-b border-border bg-background/95 backdrop-blur md:block">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between px-6">

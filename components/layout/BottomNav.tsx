@@ -16,6 +16,8 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname();
 
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <nav
       aria-label="Primary"
