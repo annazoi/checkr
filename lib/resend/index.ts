@@ -20,3 +20,28 @@ export async function sendVerificationEmail(to: string, verifyUrl: string) {
     `,
   });
 }
+
+const REPORT_STATUS_COPY: Record<string, string> = {
+  published: "Your report has been published and is now visible to the community.",
+  removed: "Your report was removed after moderation review.",
+  hidden: "Your report has been hidden pending further review.",
+  under_review: "Your report has been escalated for further review.",
+};
+
+export async function sendReportStatusEmail(to: string, status: string) {
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Update on your GameSafe report",
+    html: `<p>${REPORT_STATUS_COPY[status] ?? `Your report status changed to: ${status}.`}</p>`,
+  });
+}
+
+export async function sendBadgeEmail(to: string, badgeSlug: string) {
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "You earned a new GameSafe badge",
+    html: `<p>Congratulations! You just earned the "${badgeSlug.replace(/_/g, " ")}" badge.</p>`,
+  });
+}

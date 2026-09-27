@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { reports, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -62,6 +62,10 @@ export async function POST(request: Request) {
 
   await rateLimit.commit();
   await redis.set(duplicateKey, "1", { ex: DUPLICATE_TTL_SECONDS });
+  await db
+    .update(users)
+    .set({ reportCount: sql`${users.reportCount} + 1` })
+    .where(eq(users.id, user.id));
 
   // Fire-and-forget: doesn't block the response. On a serverless platform
   // this needs `waitUntil` (or a real queue) to guarantee it finishes after

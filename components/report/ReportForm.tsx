@@ -9,6 +9,7 @@ import { GameStep } from "@/components/report/GameStep";
 import { CategoryStep } from "@/components/report/CategoryStep";
 import { SourceStep } from "@/components/report/SourceStep";
 import { DescriptionStep } from "@/components/report/DescriptionStep";
+import { EvidenceUpload } from "@/components/report/EvidenceUpload";
 import type { ReportType } from "@/types";
 
 const TOTAL_STEPS = 3;
@@ -29,6 +30,7 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
   const [domain, setDomain] = useState("");
   const [description, setDescription] = useState("");
   const [gameSourceId, setGameSourceId] = useState<string | null>(null);
+  const [evidenceId, setEvidenceId] = useState<string | null>(null);
   const [sourceError, setSourceError] = useState<string | undefined>();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -81,6 +83,7 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
           gameSourceId,
           reportType,
           description: description.trim() || undefined,
+          evidenceId: evidenceId ?? undefined,
         }),
       });
       const body = await res.json();
@@ -126,7 +129,12 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
           >
             {step === 1 && <CategoryStep value={reportType} onChange={setReportType} />}
             {step === 2 && <SourceStep value={domain} onChange={setDomain} error={sourceError} />}
-            {step === 3 && <DescriptionStep value={description} onChange={setDescription} />}
+            {step === 3 && (
+              <div>
+                <DescriptionStep value={description} onChange={setDescription} />
+                <EvidenceUpload evidenceId={evidenceId} onChange={setEvidenceId} />
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
