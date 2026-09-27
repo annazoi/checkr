@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -6,25 +8,27 @@ import {
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Badge } from "@/components/ui/Badge";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 import type { SignalLabelType } from "@/types";
 
 const config: Record<
   SignalLabelType,
-  { tone: "clear" | "mixed" | "concern" | "risk" | "none"; text: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }
+  { tone: "clear" | "mixed" | "concern" | "risk" | "none"; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }
 > = {
-  mostly_clear: { tone: "clear", text: "Mostly clear", icon: CheckCircleIcon },
-  mixed_reports: { tone: "mixed", text: "Mixed reports", icon: ExclamationTriangleIcon },
-  concerns_reported: { tone: "concern", text: "Concerns reported", icon: ExclamationCircleIcon },
-  security_reports: { tone: "risk", text: "Security reports", icon: ShieldExclamationIcon },
-  limited_data: { tone: "none", text: "Limited data", icon: QuestionMarkCircleIcon },
-  no_reports: { tone: "none", text: "No reports yet", icon: QuestionMarkCircleIcon },
+  mostly_clear: { tone: "clear", icon: CheckCircleIcon },
+  mixed_reports: { tone: "mixed", icon: ExclamationTriangleIcon },
+  concerns_reported: { tone: "concern", icon: ExclamationCircleIcon },
+  security_reports: { tone: "risk", icon: ShieldExclamationIcon },
+  limited_data: { tone: "none", icon: QuestionMarkCircleIcon },
+  no_reports: { tone: "none", icon: QuestionMarkCircleIcon },
 };
 
 export function SignalLabel({ label }: { label: SignalLabelType }) {
-  const { tone, text, icon: Icon } = config[label];
+  const { dictionary } = useLocale();
+  const { tone, icon: Icon } = config[label];
   return (
     <Badge tone={tone} icon={<Icon className="h-3.5 w-3.5" aria-hidden="true" />}>
-      {text}
+      {dictionary.signal.label[label]}
     </Badge>
   );
 }

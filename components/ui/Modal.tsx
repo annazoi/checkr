@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "framer-motion";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 type ModalProps = {
   open: boolean;
@@ -13,6 +14,8 @@ type ModalProps = {
 };
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
+  const t = useT();
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -50,8 +53,8 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close dialog"
-                className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:text-text-primary"
+                aria-label={t("common.closeDialog")}
+                className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:rotate-90 hover:text-text-primary active:scale-90"
               >
                 <XMarkIcon className="h-5 w-5" aria-hidden="true" />
               </button>

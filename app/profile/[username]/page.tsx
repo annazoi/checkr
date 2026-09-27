@@ -21,7 +21,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const badgeCount = profile.badges.filter((b) => b.earned).length;
 
   return (
-    <div className="mx-auto max-w-lg px-6 py-8">
+    <div className="mx-auto max-w-page px-6 py-8">
       <ProfileHeader
         username={profile.user.username}
         levelName={profile.user.levelName}
@@ -31,12 +31,14 @@ export default async function PublicProfilePage({ params }: PageProps) {
         isOwnProfile={profile.isOwnProfile}
       />
 
-      <div className="mt-8">
-        <BadgeGrid badges={profile.badges} />
-      </div>
+      <div className="mt-8 md:grid md:grid-cols-2 md:gap-8">
+        <div>
+          <BadgeGrid badges={profile.badges} />
+        </div>
 
-      <div className="mt-8">
-        <ContributionHistory history={profile.history} />
+        <div className="mt-8 md:mt-0">
+          <ContributionHistory history={profile.history} />
+        </div>
       </div>
 
       <div className="mt-8">

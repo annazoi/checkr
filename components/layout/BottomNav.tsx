@@ -35,7 +35,7 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               aria-label={tab.label}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white transition-all duration-200 ease-out hover:scale-110 hover:shadow-[0_0_18px_-2px_rgba(139,127,247,0.85)] active:scale-90"
             >
               <Icon className="h-6 w-6" aria-hidden="true" />
             </Link>
@@ -48,11 +48,17 @@ export function BottomNav() {
             href={tab.href}
             aria-label={tab.label}
             className={cn(
-              "flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-0.5 text-xs",
-              active ? "text-accent-light" : "text-text-secondary",
+              "flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-0.5 text-xs transition-all duration-200 ease-out active:scale-90",
+              active ? "text-accent-light" : "text-text-secondary hover:text-text-primary",
             )}
           >
-            <Icon className="h-6 w-6" aria-hidden="true" />
+            <Icon
+              className={cn(
+                "h-6 w-6 transition-transform duration-200",
+                active ? "scale-110 drop-shadow-[0_0_6px_rgba(139,127,247,0.7)]" : "",
+              )}
+              aria-hidden="true"
+            />
             <span>{tab.label}</span>
           </Link>
         );

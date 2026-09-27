@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 type GameHit = { slug: string; title: string };
 
@@ -13,6 +15,7 @@ export function GameStep({
   onSelect: (game: { slug: string; title: string }) => void;
 }) {
   const [q, setQ] = useState("");
+  const t = useT();
 
   const { data, isLoading } = useQuery({
     queryKey: ["report-game-search", q],
@@ -29,12 +32,10 @@ export function GameStep({
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-accent-light">
-        Share an experience
+        {t("report.shareAnExperience")}
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-text-primary">Which game is this about?</h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Find the game first, then tell us what happened.
-      </p>
+      <h1 className="mt-2 text-2xl font-bold text-text-primary">{t("report.whichGame")}</h1>
+      <p className="mt-1 text-sm text-text-secondary">{t("report.findGameFirst")}</p>
 
       <div className="relative mt-5">
         <MagnifyingGlassIcon
@@ -44,14 +45,18 @@ export function GameStep({
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search for a game…"
+          placeholder={t("common.searchPlaceholder")}
           className="h-14 pl-12"
           autoFocus
         />
       </div>
 
       <div className="mt-3">
-        {isLoading && <p className="text-sm text-text-secondary">Searching…</p>}
+        {isLoading && (
+          <p className="flex items-center gap-2 text-sm text-text-secondary">
+            <Spinner size={14} /> {t("common.searching")}
+          </p>
+        )}
         {!isLoading &&
           data?.hits.map((hit) => (
             <button
@@ -64,7 +69,7 @@ export function GameStep({
             </button>
           ))}
         {!isLoading && q.trim().length > 1 && data?.hits.length === 0 && (
-          <p className="py-4 text-sm text-text-secondary">No games found.</p>
+          <p className="py-4 text-sm text-text-secondary">{t("report.noGamesFound")}</p>
         )}
       </div>
     </div>

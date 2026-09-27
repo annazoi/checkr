@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { buttonClasses } from "@/components/ui/Button";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 function DiscordIcon() {
   return (
@@ -12,6 +13,8 @@ function DiscordIcon() {
 }
 
 export function DiscordButton({ callbackUrl = "/" }: { callbackUrl?: string }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -19,7 +22,7 @@ export function DiscordButton({ callbackUrl = "/" }: { callbackUrl?: string }) {
       className={`${buttonClasses({ variant: "secondary" })} w-full gap-2`}
     >
       <DiscordIcon />
-      Continue with Discord
+      {t("auth.continueWithDiscord")}
     </button>
   );
 }

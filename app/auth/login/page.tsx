@@ -12,11 +12,13 @@ import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { loginSchema, type LoginInput } from "@/lib/validation/schemas";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
+  const t = useT();
 
   const {
     register,
@@ -35,7 +37,7 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setFormError("That email or password doesn't match our records.");
+      setFormError(t("auth.invalidCredentials"));
       return;
     }
 
@@ -45,48 +47,48 @@ function LoginForm() {
 
   return (
     <AuthCard
-      eyebrow="Welcome back"
-      title="Log in to Checkr"
+      eyebrow={t("auth.welcomeBack")}
+      title={t("auth.logInToCheckr")}
       footer={
         <>
-          New here?{" "}
+          {t("auth.newHere")}{" "}
           <Link href="/auth/register" className="font-medium text-accent-light">
-            Create an account
+            {t("auth.createAccount")}
           </Link>
         </>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <FormField label="Email" htmlFor="email" error={errors.email?.message}>
+        <FormField label={t("auth.email")} htmlFor="email" error={errors.email?.message}>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.emailPlaceholder")}
             {...register("email")}
           />
         </FormField>
 
-        <FormField label="Password" htmlFor="password" error={errors.password?.message}>
+        <FormField label={t("auth.password")} htmlFor="password" error={errors.password?.message}>
           <Input
             id="password"
             type="password"
             autoComplete="current-password"
-            placeholder="Your password"
+            placeholder={t("auth.passwordPlaceholder")}
             {...register("password")}
           />
         </FormField>
 
         {formError && <p className="text-sm text-status-risk">{formError}</p>}
 
-        <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Logging in…" : "Log in"}
+        <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
+          {isSubmitting ? t("auth.loggingIn") : t("auth.logIn")}
         </Button>
       </form>
 
       <div className="my-4 flex items-center gap-3 text-xs text-text-secondary">
         <span className="h-px flex-1 bg-border" />
-        or
+        {t("common.or")}
         <span className="h-px flex-1 bg-border" />
       </div>
 

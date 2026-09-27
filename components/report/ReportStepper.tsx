@@ -1,5 +1,6 @@
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/lib/utils/cn";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function ReportStepper({
   currentStep,
@@ -8,14 +9,16 @@ export function ReportStepper({
   currentStep: number;
   totalSteps: number;
 }) {
+  const t = useT();
+
   return (
     <div>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-accent-light">
-          Share an experience
+          {t("report.shareAnExperience")}
         </p>
         <p className="text-xs text-text-secondary">
-          Step {currentStep} of {totalSteps}
+          {t("report.stepOf", { current: currentStep, total: totalSteps })}
         </p>
       </div>
       <div className="mt-3 flex items-center">

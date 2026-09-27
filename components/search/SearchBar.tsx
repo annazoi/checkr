@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Input } from "@/components/ui/Input";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 const DEBOUNCE_MS = 200;
 
-export function SearchBar({ placeholder = "Search for a game…" }: { placeholder?: string }) {
+export function SearchBar({ placeholder }: { placeholder?: string }) {
   const router = useRouter();
+  const t = useT();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get("q") ?? "");
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -35,8 +37,8 @@ export function SearchBar({ placeholder = "Search for a game…" }: { placeholde
       <Input
         value={value}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder={placeholder}
-        aria-label="Search for a game"
+        placeholder={placeholder ?? t("common.searchPlaceholder")}
+        aria-label={t("common.searchPlaceholder")}
         className="h-14 pl-12 pr-4 text-base"
       />
     </div>

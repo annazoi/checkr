@@ -24,13 +24,23 @@ export function GameCard({
   return (
     <Link
       href={`/games/${slug}`}
-      className="flex items-center gap-4 border-b border-border py-4 last:border-none"
+      className="group flex items-center gap-4 border-b border-border rounded-control px-2 py-4 -mx-2 transition-colors duration-200 hover:bg-elevated last:border-none"
     >
-      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-control bg-elevated">
-        {coverUrl && <Image src={coverUrl} alt="" fill sizes="56px" className="object-cover" />}
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-control bg-elevated transition-all duration-200 group-hover:shadow-[0_0_16px_-4px_rgba(139,127,247,0.7)]">
+        {coverUrl && (
+          <Image
+            src={coverUrl}
+            alt=""
+            fill
+            sizes="56px"
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
+          />
+        )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-text-primary">{title}</p>
+        <p className="truncate font-semibold text-text-primary transition-colors duration-200 group-hover:text-accent-light">
+          {title}
+        </p>
         <p className="truncate text-sm text-text-secondary">
           {[developer, platforms.join(" · ")].filter(Boolean).join(" · ")}
         </p>
@@ -40,7 +50,10 @@ export function GameCard({
           </div>
         )}
       </div>
-      <ChevronRightIcon className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true" />
+      <ChevronRightIcon
+        className="h-5 w-5 shrink-0 text-text-secondary transition-all duration-200 group-hover:translate-x-1 group-hover:text-accent-light"
+        aria-hidden="true"
+      />
     </Link>
   );
 }

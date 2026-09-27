@@ -10,6 +10,7 @@ import { CategoryStep } from "@/components/report/CategoryStep";
 import { SourceStep } from "@/components/report/SourceStep";
 import { DescriptionStep } from "@/components/report/DescriptionStep";
 import { EvidenceUpload } from "@/components/report/EvidenceUpload";
+import { useT } from "@/components/i18n/LocaleProvider";
 import type { ReportType } from "@/types";
 
 const TOTAL_STEPS = 3;
@@ -22,6 +23,7 @@ const variants = {
 
 export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
   const router = useRouter();
+  const t = useT();
 
   const [gameSlug, setGameSlug] = useState<string | null>(initialGameSlug ?? null);
   const [step, setStep] = useState(1);
@@ -61,7 +63,7 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
         });
         const body = await res.json();
         if (!res.ok) {
-          setSourceError(body.error?.message ?? "Couldn't save that source.");
+          setSourceError(body.error?.message ?? t("report.couldntSaveSource"));
           return;
         }
         setGameSourceId(body.data.gameSourceId);
@@ -88,7 +90,7 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
       });
       const body = await res.json();
       if (!res.ok) {
-        setSubmitError(body.error?.message ?? "Something went wrong. Please try again.");
+        setSubmitError(body.error?.message ?? t("report.genericError"));
         return;
       }
       router.push(`/report/success?source=${gameSourceId}`);
@@ -110,7 +112,7 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
     (step === 2 && domain.trim().length >= 3) ||
     step === 3;
 
-  const nextLabel = step === 3 ? "Submit report" : "Next";
+  const nextLabel = step === 3 ? t("report.submitReport") : t("common.next");
 
   return (
     <div>
@@ -143,16 +145,17 @@ export function ReportForm({ initialGameSlug }: { initialGameSlug?: string }) {
 
       <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
         <Button type="button" variant="ghost" onClick={handleBack} disabled={isBusy}>
-          Back
+          {t("common.back")}
         </Button>
         <Button
           type="button"
           variant="primary"
           trailingIcon={step !== 3}
           onClick={handleNext}
-          disabled={!canProceed || isBusy}
+          disabled={!canProceed}
+          isLoading={isBusy}
         >
-          {isBusy ? "Please wait…" : nextLabel}
+          {isBusy ? t("common.pleaseWait") : nextLabel}
         </Button>
       </div>
     </div>

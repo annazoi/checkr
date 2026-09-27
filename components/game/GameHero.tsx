@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 type GameHeroProps = {
   title: string;
@@ -19,6 +22,8 @@ export function GameHero({
   coverUrl,
   children,
 }: GameHeroProps) {
+  const t = useT();
+
   return (
     <div className="relative">
       <div className="relative h-56 w-full overflow-hidden bg-elevated md:h-72">
@@ -28,7 +33,7 @@ export function GameHero({
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         <Link
           href="/search"
-          aria-label="Back to search"
+          aria-label={t("games.backToSearchAria")}
           className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/70 text-text-primary backdrop-blur"
         >
           <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />

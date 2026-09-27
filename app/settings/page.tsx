@@ -101,7 +101,7 @@ export default function SettingsPage() {
             />
           </FormField>
 
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
+          <Button type="submit" variant="primary" isLoading={isSubmitting}>
             {isSubmitting ? t("settings.saving") : t("settings.updatePassword")}
           </Button>
         </form>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
           variant="secondary"
           className="mt-4"
           onClick={handleRevokeSessions}
-          disabled={isRevoking}
+          isLoading={isRevoking}
         >
           {isRevoking ? t("settings.loggingOut") : t("settings.logoutEverywhere")}
         </Button>

@@ -28,23 +28,26 @@ export function LanguageSwitcher() {
         onClick={() => setOpen((prev) => !prev)}
         aria-label={t("nav.language")}
         aria-expanded={open}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:text-text-primary"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:scale-110 hover:text-accent-light"
       >
-        <LanguageIcon className="h-5 w-5" aria-hidden="true" />
+        <LanguageIcon
+          className={cn("h-5 w-5 transition-transform duration-200", open && "rotate-12")}
+          aria-hidden="true"
+        />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="absolute right-0 z-50 mt-2 w-32 rounded-card border border-border bg-surface p-1 shadow-xl">
+          <div className="absolute right-0 z-50 mt-2 w-32 animate-pop-in origin-top-right rounded-card border border-border bg-surface p-1 shadow-xl">
             {locales.map((code) => (
               <button
                 key={code}
                 type="button"
                 onClick={() => handleSelect(code)}
                 className={cn(
-                  "flex w-full items-center rounded-control px-3 py-2 text-sm font-medium hover:bg-elevated",
-                  locale === code ? "text-text-primary" : "text-text-secondary",
+                  "flex w-full items-center rounded-control px-3 py-2 text-sm font-medium transition-all duration-150 hover:scale-[1.03] hover:bg-elevated active:scale-95",
+                  locale === code ? "text-accent-light" : "text-text-secondary",
                 )}
               >
                 {LOCALE_LABELS[code]}

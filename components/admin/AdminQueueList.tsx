@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { formatRelativeTime } from "@/lib/utils/format-relative-time";
 import { useUIStore } from "@/store/ui";
+import { useLocale, useT } from "@/components/i18n/LocaleProvider";
 
 type QueueReport = {
   id: string;
@@ -23,12 +24,7 @@ type QueueReport = {
 
 type ModerationAction = "approve" | "reject" | "hide" | "escalate";
 
-const ACTION_LABELS: Record<ModerationAction, string> = {
-  approve: "Approve",
-  reject: "Reject",
-  hide: "Hide",
-  escalate: "Escalate",
-};
+const ACTIONS: ModerationAction[] = ["approve", "reject", "hide", "escalate"];
 
 const SECURITY_TYPES = new Set(["malware", "antivirus_warning"]);
 
@@ -40,6 +36,8 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const showToast = useUIStore((s) => s.showToast);
+  const t = useT();
+  const { dictionary } = useLocale();
 
   function openAction(report: QueueReport, action: ModerationAction) {
     setActiveReport(report);
@@ -70,11 +68,14 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
       });
       const body = await res.json();
       if (!res.ok) {
-        showToast(body.error?.message ?? "Action failed.", "error");
+        showToast(body.error?.message ?? t("admin.actionFailed"), "error");
         return;
       }
       setReports((prev) => prev.filter((r) => r.id !== activeReport.id));
-      showToast(`Report ${ACTION_LABELS[activeAction].toLowerCase()}d.`, "success");
+      showToast(
+        t("admin.reportActionToast", { action: dictionary.admin.actionsPast[activeAction] }),
+        "success",
+      );
       closeModal();
     } finally {
       setIsSubmitting(false);
@@ -82,11 +83,7 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
   }
 
   if (reports.length === 0) {
-    return (
-      <Card className="text-center text-sm text-text-secondary">
-        The queue is empty. Nothing is waiting for review.
-      </Card>
-    );
+    return <Card className="text-center text-sm text-text-secondary">{t("admin.queueEmpty")}</Card>;
   }
 
   return (
@@ -95,14 +92,14 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
         <Card key={report.id}>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={SECURITY_TYPES.has(report.reportType) ? "risk" : "neutral"}>
-              {report.reportType.replace(/_/g, " ")}
+              {dictionary.reportTypes[report.reportType as keyof typeof dictionary.reportTypes] ?? report.reportType}
             </Badge>
             {report.anomalyDetected && (
               <Badge
                 tone="concern"
                 icon={<ExclamationTriangleIcon className="h-3.5 w-3.5" aria-hidden="true" />}
               >
-                Anomaly flagged
+                {t("admin.anomalyFlagged")}
               </Badge>
             )}
             <span className="ml-auto text-xs text-text-secondary">
@@ -111,12 +108,14 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
           </div>
 
           <p className="mt-2 text-sm text-text-secondary">
-            {report.description || "No description provided."}
+            {report.description || t("admin.noDescriptionProvided")}
           </p>
-          <p className="mt-1 text-xs text-text-secondary">Submitted by {report.username}</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            {t("admin.submittedBy", { username: report.username })}
+          </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {(Object.keys(ACTION_LABELS) as ModerationAction[]).map((action) => (
+            {ACTIONS.map((action) => (
               <Button
                 key={action}
                 type="button"
@@ -124,7 +123,7 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
                 size="md"
                 onClick={() => openAction(report, action)}
               >
-                {ACTION_LABELS[action]}
+                {dictionary.admin.actions[action]}
               </Button>
             ))}
           </div>
@@ -134,12 +133,12 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
       <Modal
         open={activeReport !== null}
         onClose={closeModal}
-        title={activeAction ? `${ACTION_LABELS[activeAction]} report` : undefined}
+        title={activeAction ? t("admin.reportActionTitle", { action: dictionary.admin.actions[activeAction] }) : undefined}
       >
         <div className="space-y-3">
           <div>
             <label htmlFor="reason" className="text-sm font-medium text-text-primary">
-              Reason
+              {t("admin.reason")}
             </label>
             <Textarea
               id="reason"
@@ -147,12 +146,12 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
               onChange={(e) => setReason(e.target.value)}
               rows={2}
               className="mt-1.5"
-              placeholder="Why is this action being taken?"
+              placeholder={t("admin.whyIsThisAction")}
             />
           </div>
           <div>
             <label htmlFor="notes" className="text-sm font-medium text-text-primary">
-              Internal notes (optional)
+              {t("admin.internalNotesOptional")}
             </label>
             <Textarea
               id="notes"
@@ -166,10 +165,11 @@ export function AdminQueueList({ initialReports }: { initialReports: QueueReport
             type="button"
             variant="primary"
             className="w-full"
-            disabled={reason.trim().length === 0 || isSubmitting}
+            disabled={reason.trim().length === 0}
+            isLoading={isSubmitting}
             onClick={submitAction}
           >
-            {isSubmitting ? "Submitting…" : "Confirm"}
+            {isSubmitting ? t("admin.submitting") : t("admin.confirm")}
           </Button>
         </div>
       </Modal>

@@ -30,6 +30,9 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
+      fontSize: {
+        xs: ["14px", { lineHeight: "20px" }],
+      },
       borderRadius: {
         card: "16px",
         control: "10px",
@@ -37,6 +40,25 @@ const config: Config = {
       },
       maxWidth: {
         page: "1080px",
+      },
+      keyframes: {
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 0px 0px rgba(237,137,54,0)" },
+          "50%": { boxShadow: "0 0 14px 2px rgba(237,137,54,0.55)" },
+        },
+        "risk-pulse": {
+          "0%, 100%": { boxShadow: "0 0 0px 0px rgba(229,62,62,0)" },
+          "50%": { boxShadow: "0 0 16px 2px rgba(229,62,62,0.6)" },
+        },
+        "pop-in": {
+          "0%": { opacity: "0", transform: "scale(0.9) translateY(4px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+      },
+      animation: {
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "risk-pulse": "risk-pulse 1.8s ease-in-out infinite",
+        "pop-in": "pop-in 0.15s ease-out",
       },
     },
   },

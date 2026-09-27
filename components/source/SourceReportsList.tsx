@@ -4,14 +4,11 @@ import { useEffect, useState } from "react";
 import { Chip } from "@/components/ui/Chip";
 import { ReportCard } from "@/components/report/ReportCard";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Spinner } from "@/components/ui/Spinner";
 import { useReports, type SourceReportRow } from "@/hooks/useReports";
+import { useT } from "@/components/i18n/LocaleProvider";
 
-const TABS = [
-  { key: "all", label: "All" },
-  { key: "no_issues", label: "No issues" },
-  { key: "concerns", label: "Concerns" },
-  { key: "security", label: "Security" },
-];
+const TAB_KEYS = ["all", "no_issues", "concerns", "security"] as const;
 
 const PAGE_SIZE = 10;
 
@@ -25,6 +22,19 @@ export function SourceReportsList({
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<SourceReportRow[]>(initialReports);
+  const t = useT();
+
+  const tabs = TAB_KEYS.map((key) => ({
+    key,
+    label:
+      key === "all"
+        ? t("search.all")
+        : key === "no_issues"
+          ? t("report.categories.no_issue")
+          : key === "concerns"
+            ? t("signal.concernsLabel")
+            : t("reportTypes.antivirus_warning"),
+  }));
 
   const skipFetch = page === 1 && filter === "all";
   const { data, isLoading } = useReports(gameSourceId, filter, page);
@@ -44,6 +54,7 @@ export function SourceReportsList({
   }
 
   const loading = !skipFetch && isLoading && page === 1;
+  const loadingMore = !skipFetch && isLoading && page > 1;
   const hasMore = skipFetch
     ? initialReports.length === PAGE_SIZE
     : (data?.reports.length ?? 0) === PAGE_SIZE;
@@ -51,7 +62,7 @@ export function SourceReportsList({
   return (
     <div>
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Chip key={tab.key} active={filter === tab.key} onClick={() => handleFilterChange(tab.key)}>
             {tab.label}
           </Chip>
@@ -68,9 +79,7 @@ export function SourceReportsList({
           ))}
 
         {!loading && items.length === 0 && (
-          <p className="py-8 text-center text-sm text-text-secondary">
-            No reports match this filter yet.
-          </p>
+          <p className="py-8 text-center text-sm text-text-secondary">{t("sources.noReportsMatchFilter")}</p>
         )}
 
         {!loading && items.map((report) => <ReportCard key={report.id} report={report} />)}
@@ -80,9 +89,10 @@ export function SourceReportsList({
         <button
           type="button"
           onClick={() => setPage((p) => p + 1)}
-          className="mt-4 flex min-h-[48px] w-full items-center justify-center rounded-control border border-accent text-sm font-medium text-accent-light"
+          disabled={loadingMore}
+          className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-control border border-accent text-sm font-medium text-accent-light disabled:opacity-60"
         >
-          Load more →
+          {loadingMore ? <Spinner size={16} /> : t("common.loadMore")}
         </button>
       )}
     </div>

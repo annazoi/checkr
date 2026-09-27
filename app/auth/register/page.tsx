@@ -12,10 +12,12 @@ import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { registerSchema, type RegisterInput } from "@/lib/validation/schemas";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  const t = useT();
 
   const {
     register,
@@ -42,7 +44,7 @@ export default function RegisterPage() {
         setError(field, { message: body.error.message });
         return;
       }
-      setFormError(body.error?.message ?? "Something went wrong. Please try again.");
+      setFormError(body.error?.message ?? t("auth.genericError"));
       return;
     }
 
@@ -59,44 +61,44 @@ export default function RegisterPage() {
 
   return (
     <AuthCard
-      eyebrow="Join the community"
-      title="Create your account"
-      subtitle="Share what you've seen and help other players spot the pattern."
+      eyebrow={t("auth.joinCommunity")}
+      title={t("auth.createYourAccount")}
+      subtitle={t("auth.createAccountSubtitle")}
       footer={
         <>
-          Already have an account?{" "}
+          {t("auth.alreadyHaveAccount")}{" "}
           <Link href="/auth/login" className="font-medium text-accent-light">
-            Log in
+            {t("auth.logIn")}
           </Link>
         </>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <FormField label="Username" htmlFor="username" error={errors.username?.message}>
+        <FormField label={t("auth.username")} htmlFor="username" error={errors.username?.message}>
           <Input
             id="username"
             autoComplete="username"
-            placeholder="PixelScout"
+            placeholder={t("auth.usernamePlaceholder")}
             {...register("username")}
           />
         </FormField>
 
-        <FormField label="Email" htmlFor="email" error={errors.email?.message}>
+        <FormField label={t("auth.email")} htmlFor="email" error={errors.email?.message}>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.emailPlaceholder")}
             {...register("email")}
           />
         </FormField>
 
-        <FormField label="Password" htmlFor="password" error={errors.password?.message}>
+        <FormField label={t("auth.password")} htmlFor="password" error={errors.password?.message}>
           <Input
             id="password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            placeholder={t("auth.passwordHintPlaceholder")}
             {...register("password")}
           />
         </FormField>
@@ -109,7 +111,7 @@ export default function RegisterPage() {
             {...register("ageConfirmed")}
           />
           <label htmlFor="ageConfirmed" className="text-sm text-text-secondary">
-            I confirm that I am at least 13 years old.
+            {t("auth.ageConfirm")}
           </label>
         </div>
         {errors.ageConfirmed && (
@@ -118,14 +120,14 @@ export default function RegisterPage() {
 
         {formError && <p className="text-sm text-status-risk">{formError}</p>}
 
-        <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating account…" : "Create account"}
+        <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
+          {isSubmitting ? t("auth.creatingAccount") : t("auth.createAccount")}
         </Button>
       </form>
 
       <div className="my-4 flex items-center gap-3 text-xs text-text-secondary">
         <span className="h-px flex-1 bg-border" />
-        or
+        {t("common.or")}
         <span className="h-px flex-1 bg-border" />
       </div>
 

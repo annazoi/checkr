@@ -29,18 +29,18 @@ export function NotificationsMenu() {
         onClick={handleToggle}
         aria-label={t("notifications.label")}
         aria-expanded={open}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:text-text-primary"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:scale-110 hover:text-accent-light"
       >
         <BellIcon className="h-5 w-5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-status-risk" />
+          <span className="absolute right-2 top-2 h-2 w-2 animate-risk-pulse rounded-full bg-status-risk" />
         )}
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="absolute right-0 z-50 mt-2 w-80 rounded-card border border-border bg-surface p-2 shadow-xl">
+          <div className="absolute right-0 z-50 mt-2 w-80 animate-pop-in origin-top-right rounded-card border border-border bg-surface p-2 shadow-xl">
             <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-secondary">
               {t("notifications.title")}
             </p>
@@ -52,7 +52,7 @@ export function NotificationsMenu() {
                   <div
                     key={n.id}
                     className={cn(
-                      "rounded-control p-2.5 text-sm",
+                      "rounded-control p-2.5 text-sm transition-colors duration-200 hover:bg-elevated",
                       !n.readAt && "bg-accent/10",
                     )}
                   >

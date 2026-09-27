@@ -1,3 +1,8 @@
+"use client";
+
+import { cn } from "@/lib/utils/cn";
+import { useT } from "@/components/i18n/LocaleProvider";
+
 type SignalBarProps = {
   noIssue: number;
   mixed: number;
@@ -22,9 +27,10 @@ export function SignalBar({
   mixed,
   concerns,
   security = 0,
-  leftLabel = "No issues",
-  rightLabel = "Concerns",
+  leftLabel,
+  rightLabel,
 }: SignalBarProps) {
+  const t = useT();
   const values = { noIssue, mixed, concerns, security };
   const total = noIssue + mixed + concerns + security;
   const safeTotal = total === 0 ? 1 : total;
@@ -39,7 +45,7 @@ export function SignalBar({
           return (
             <div
               key={key}
-              className={colorClass}
+              className={cn(colorClass, "transition-[width] duration-700 ease-out")}
               style={{ width: `${width}%` }}
               role="presentation"
             />
@@ -47,11 +53,9 @@ export function SignalBar({
         })}
       </div>
       <div className="mt-2 flex items-center justify-between text-xs text-text-secondary">
-        <span>{leftLabel}</span>
-        {mixed > 0 && (
-          <span>{Math.round((mixed / safeTotal) * 100)}% mixed</span>
-        )}
-        <span>{rightLabel}</span>
+        <span>{leftLabel ?? t("signal.noIssuesLabel")}</span>
+        {mixed > 0 && <span>{t("signal.mixedPercent", { percent: Math.round((mixed / safeTotal) * 100) })}</span>}
+        <span>{rightLabel ?? t("signal.concernsLabel")}</span>
       </div>
     </div>
   );
