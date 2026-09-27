@@ -1,5 +1,5 @@
 {
-  "name": "gamesafe",
+  "name": "checkr",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,10 +13,7 @@
     "sync-games": "tsx scripts/sync-games.ts"
   },
   "dependencies": {
-    "@arcjet/next": "^1.13.0",
     "@auth/drizzle-adapter": "^1.11.3",
-    "@aws-sdk/client-s3": "^3.1141.0",
-    "@aws-sdk/s3-request-presigner": "^3.1141.0",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.9.1",
     "@neondatabase/serverless": "^1.1.0",
@@ -25,24 +22,26 @@
     "@types/sharp": "^0.31.1",
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.39.0",
+    "@vercel/blob": "^2.8.0",
+    "@vercel/functions": "^3.9.9",
     "bcrypt": "^6.0.0",
     "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.3",
     "framer-motion": "^13.4.4",
     "next": "14.2.35",
     "next-auth": "^5.0.0-beta.32",
+    "nodemailer": "^8.0.11",
     "postgres": "^3.4.9",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.89.0",
-    "resend": "^6.30.0",
     "sharp": "^0.35.4",
-    "typesense": "^3.1.0",
     "zod": "^3.25.76",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "dotenv": "^18.0.4",

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { notifications, users } from "@/lib/db/schema";
 import { levelFromXp } from "@/lib/gamification/xp";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
-import { sendBadgeEmail } from "@/lib/resend";
+import { sendBadgeEmail } from "@/lib/smtp";
 
 export async function applyXpDelta(userId: string, delta: number) {
   const [updated] = await db

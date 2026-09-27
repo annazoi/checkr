@@ -10,7 +10,7 @@ import { Disclaimer } from "@/components/ui/Disclaimer";
 type PageProps = { params: { username: string } };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  return { title: `${params.username} — GameSafe` };
+  return { title: `${params.username} — Checkr` };
 }
 
 export default async function PublicProfilePage({ params }: PageProps) {

@@ -1,5 +1,6 @@
-import NextAuth, { CredentialsSignin } from "next-auth";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Discord, { type DiscordProfile } from "next-auth/providers/discord";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -11,10 +12,6 @@ import { authConfig, sessionKey, userSessionsKey, SESSION_MAX_AGE_SECONDS } from
 // This file (and its bcrypt/Drizzle dependencies) must only be imported from
 // Node runtime contexts -- API routes and server components. middleware.ts
 // uses lib/auth/config.ts directly instead, since it runs on the Edge runtime.
-
-export class EmailNotVerifiedError extends CredentialsSignin {
-  code = "email_not_verified";
-}
 
 export async function revokeSession(sessionId: string) {
   await redis.del(sessionKey(sessionId));
@@ -29,6 +26,31 @@ export async function revokeAllSessions(userId: string) {
     await Promise.all(sessionIds.map((id) => redis.del(sessionKey(id))));
   }
   await redis.del(key);
+}
+
+async function mintSession(userId: string) {
+  const sessionId = crypto.randomUUID();
+  await redis.set(sessionKey(sessionId), userId, { ex: SESSION_MAX_AGE_SECONDS });
+  await redis.sadd(userSessionsKey(userId), sessionId);
+  return sessionId;
+}
+
+async function generateUniqueUsername(rawName: string) {
+  const base = rawName.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 25) || "player";
+  let candidate = base;
+  let suffix = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const [clash] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, candidate))
+      .limit(1);
+    if (!clash) return candidate;
+    suffix += 1;
+    candidate = `${base}${suffix}`;
+  }
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -51,28 +73,67 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1);
 
         if (!user || user.status !== "active" || user.deletedAt) return null;
+        // No password on file means this account was created via an OAuth
+        // provider (e.g. Discord) -- there's nothing to compare against.
+        if (!user.passwordHash) return null;
 
         const passwordMatches = await bcrypt.compare(password, user.passwordHash);
         if (!passwordMatches) return null;
-
-        if (!user.emailVerified) {
-          throw new EmailNotVerifiedError();
-        }
-
-        const sessionId = crypto.randomUUID();
-        await redis.set(sessionKey(sessionId), user.id, {
-          ex: SESSION_MAX_AGE_SECONDS,
-        });
-        await redis.sadd(userSessionsKey(user.id), sessionId);
 
         return {
           id: user.id,
           email: user.email,
           name: user.username,
           role: user.role,
-          sessionId,
+          sessionId: await mintSession(user.id),
         };
       },
     }),
+    Discord({
+      clientId: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+    }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user, account, profile }) {
+      if (account?.provider !== "discord") return true; // Credentials already resolved everything in authorize()
+
+      const discordProfile = profile as DiscordProfile | undefined;
+      if (!discordProfile?.email || !discordProfile.verified) {
+        return false; // require a verified email from Discord
+      }
+
+      const normalizedEmail = discordProfile.email.toLowerCase();
+      let [dbUser] = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+
+      if (!dbUser) {
+        const username = await generateUniqueUsername(discordProfile.username);
+        [dbUser] = await db
+          .insert(users)
+          .values({
+            username,
+            email: normalizedEmail,
+            passwordHash: null,
+            emailVerified: true,
+            // Discord's own terms already require accounts to be 13+, so this
+            // doesn't need a separate post-OAuth age-confirmation step.
+            ageVerified: true,
+          })
+          .returning();
+      }
+
+      if (dbUser.status !== "active" || dbUser.deletedAt) return false;
+
+      // Mutating `user` here propagates to the `jwt` callback's `user` param
+      // for this same sign-in, which is how the shared session logic in
+      // authConfig (same code path the Credentials provider uses) picks up
+      // our internal id/role/sessionId uniformly regardless of provider.
+      user.id = dbUser.id;
+      user.role = dbUser.role;
+      user.sessionId = await mintSession(dbUser.id);
+
+      return true;
+    },
+  },
 });

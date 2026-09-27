@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
@@ -31,27 +32,15 @@ export function EvidenceUpload({
 
     setIsUploading(true);
     try {
-      const presignRes = await fetch("/api/upload/evidence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: file.type, size: file.size }),
+      const blob = await upload(`evidence/raw/${crypto.randomUUID()}-${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload/evidence",
       });
-      const presignBody = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignBody.error?.message ?? "Upload failed.");
-
-      const { uploadUrl, key } = presignBody.data as { uploadUrl: string; key: string };
-
-      const putRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!putRes.ok) throw new Error("Upload failed. Please try again.");
 
       const confirmRes = await fetch("/api/upload/evidence/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ url: blob.url }),
       });
       const confirmBody = await confirmRes.json();
       if (!confirmRes.ok) throw new Error(confirmBody.error?.message ?? "Upload failed.");

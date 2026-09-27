@@ -78,7 +78,9 @@ export const users = pgTable("users", {
   username: varchar("username", { length: 30 }).unique().notNull(),
   email: varchar("email", { length: 255 }).unique().notNull(),
   emailVerified: boolean("email_verified").default(false),
-  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  // Nullable: accounts created via an OAuth provider (e.g. Discord) have no
+  // password at all, so Credentials sign-in must be rejected for them.
+  passwordHash: varchar("password_hash", { length: 255 }),
   avatarPreset: varchar("avatar_preset", { length: 50 }),
   avatarUrl: varchar("avatar_url", { length: 500 }),
   role: userRoleEnum("role").default("user").notNull(),
@@ -216,7 +218,7 @@ export const reportEvidence = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    r2Key: varchar("r2_key", { length: 500 }).notNull(),
+    blobUrl: varchar("blob_url", { length: 1000 }).notNull(),
     status: evidenceStatusEnum("status").default("pending_review").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },

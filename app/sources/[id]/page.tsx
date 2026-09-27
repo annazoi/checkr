@@ -20,10 +20,10 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const context = await getSourceContext(params.id);
-  if (!context) return { title: "Source not found — GameSafe" };
+  if (!context) return { title: "Source not found — Checkr" };
 
   return {
-    title: `${context.domain} — GameSafe`,
+    title: `${context.domain} — Checkr`,
     description: `A snapshot of what players have shared about ${context.domain} for ${context.gameTitle}.`,
   };
 }

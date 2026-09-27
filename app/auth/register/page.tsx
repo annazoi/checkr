@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { DiscordButton } from "@/components/auth/DiscordButton";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
@@ -44,7 +46,15 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/auth/verify-email");
+    // Accounts no longer require email verification, so log the user in
+    // immediately instead of sending them to a "check your inbox" screen.
+    await signIn("credentials", {
+      email: values.email,
+      password: values.password,
+      redirect: false,
+    });
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -112,6 +122,14 @@ export default function RegisterPage() {
           {isSubmitting ? "Creating account…" : "Create account"}
         </Button>
       </form>
+
+      <div className="my-4 flex items-center gap-3 text-xs text-text-secondary">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <DiscordButton />
     </AuthCard>
   );
 }

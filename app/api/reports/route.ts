@@ -1,4 +1,5 @@
 import { eq, sql } from "drizzle-orm";
+import { waitUntil } from "@vercel/functions";
 import { db } from "@/lib/db";
 import { reports, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -67,15 +68,17 @@ export async function POST(request: Request) {
     .set({ reportCount: sql`${users.reportCount} + 1` })
     .where(eq(users.id, user.id));
 
-  // Fire-and-forget: doesn't block the response. On a serverless platform
-  // this needs `waitUntil` (or a real queue) to guarantee it finishes after
-  // the response is sent -- flagged as a follow-up for the deploy target.
-  detectAnomaly(gameSourceId, description ?? undefined)
-    .then((anomalyDetected) => {
-      if (!anomalyDetected) return;
-      return db.update(reports).set({ anomalyDetected: true }).where(eq(reports.id, report.id));
-    })
-    .catch((error) => console.error("Anomaly detection failed", error));
+  // Doesn't block the response, but waitUntil keeps this Vercel function
+  // instance alive until it settles -- without it, Vercel can freeze/recycle
+  // the instance the moment the response is sent and this would just never run.
+  waitUntil(
+    detectAnomaly(gameSourceId, description ?? undefined)
+      .then((anomalyDetected) => {
+        if (!anomalyDetected) return;
+        return db.update(reports).set({ anomalyDetected: true }).where(eq(reports.id, report.id));
+      })
+      .catch((error) => console.error("Anomaly detection failed", error)),
+  );
 
   await invalidateSignalCache(gameSourceId);
 

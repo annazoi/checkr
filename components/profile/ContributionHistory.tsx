@@ -1,18 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { formatRelativeTime } from "@/lib/utils/format-relative-time";
-
-const REPORT_TYPE_LABELS: Record<string, string> = {
-  no_issue: "No issues encountered",
-  suspicious: "Suspicious behavior",
-  malware: "Malware",
-  suspicious_installer: "Unexpected installer",
-  fake_content: "Misleading details",
-  dangerous_redirect: "Dangerous redirect",
-  unexpected_software: "Unexpected download",
-  antivirus_warning: "Security warning",
-  other: "Something else",
-};
+import { useLocale, useT } from "@/components/i18n/LocaleProvider";
 
 type HistoryRow = {
   id: string;
@@ -24,12 +15,16 @@ type HistoryRow = {
 };
 
 export function ContributionHistory({ history }: { history: HistoryRow[] }) {
+  const { dictionary, locale } = useLocale();
+  const t = useT();
+  const reportTypeLabels: Record<string, string> = dictionary.reportTypes;
+
   if (history.length === 0) {
     return (
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-text-primary">Contribution history</h2>
+        <h2 className="mb-3 text-lg font-semibold text-text-primary">{t("profile.contributionHistory")}</h2>
         <p className="rounded-card border border-border bg-surface p-5 text-center text-sm text-text-secondary">
-          No reports shared yet.
+          {t("profile.noReportsYet")}
         </p>
       </div>
     );
@@ -37,7 +32,7 @@ export function ContributionHistory({ history }: { history: HistoryRow[] }) {
 
   return (
     <div>
-      <h2 className="mb-3 text-lg font-semibold text-text-primary">Contribution history</h2>
+      <h2 className="mb-3 text-lg font-semibold text-text-primary">{t("profile.contributionHistory")}</h2>
       <div className="divide-y divide-border rounded-card border border-border bg-surface">
         {history.map((row) => (
           <Link
@@ -47,10 +42,10 @@ export function ContributionHistory({ history }: { history: HistoryRow[] }) {
           >
             <div className="min-w-0">
               <p className="truncate font-medium text-text-primary">
-                {REPORT_TYPE_LABELS[row.reportType] ?? row.reportType}
+                {reportTypeLabels[row.reportType] ?? row.reportType}
               </p>
               <p className="truncate text-xs text-text-secondary">
-                {row.domain} · {row.createdAt ? formatRelativeTime(new Date(row.createdAt).toISOString()) : ""}
+                {row.domain} · {row.createdAt ? formatRelativeTime(new Date(row.createdAt).toISOString(), locale) : ""}
               </p>
             </div>
             <ChevronRightIcon className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true" />

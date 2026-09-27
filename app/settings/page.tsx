@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { useUIStore } from "@/store/ui";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { changePasswordSchema, type ChangePasswordInput } from "@/lib/validation/schemas";
 
 export default function SettingsPage() {
   const showToast = useUIStore((s) => s.showToast);
   const [isRevoking, setIsRevoking] = useState(false);
+  const t = useT();
 
   const {
     register,
@@ -37,12 +39,12 @@ export default function SettingsPage() {
       if (res.status === 403) {
         setError("currentPassword", { message: body.error?.message });
       } else {
-        showToast(body.error?.message ?? "Something went wrong.", "error");
+        showToast(body.error?.message ?? t("settings.somethingWentWrong"), "error");
       }
       return;
     }
 
-    showToast("Password updated.", "success");
+    showToast(t("settings.passwordUpdated"), "success");
     reset();
   }
 
@@ -58,14 +60,14 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-lg px-6 py-8">
-      <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-      <p className="mt-1 text-sm text-text-secondary">Manage your account security.</p>
+      <h1 className="text-2xl font-bold text-text-primary">{t("settings.title")}</h1>
+      <p className="mt-1 text-sm text-text-secondary">{t("settings.subtitle")}</p>
 
       <Card className="mt-6">
-        <h2 className="text-lg font-semibold text-text-primary">Change password</h2>
+        <h2 className="text-lg font-semibold text-text-primary">{t("settings.changePassword")}</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4" noValidate>
           <FormField
-            label="Current password"
+            label={t("settings.currentPassword")}
             htmlFor="currentPassword"
             error={errors.currentPassword?.message}
           >
@@ -77,7 +79,7 @@ export default function SettingsPage() {
             />
           </FormField>
 
-          <FormField label="New password" htmlFor="newPassword" error={errors.newPassword?.message}>
+          <FormField label={t("settings.newPassword")} htmlFor="newPassword" error={errors.newPassword?.message}>
             <Input
               id="newPassword"
               type="password"
@@ -87,7 +89,7 @@ export default function SettingsPage() {
           </FormField>
 
           <FormField
-            label="Confirm new password"
+            label={t("settings.confirmNewPassword")}
             htmlFor="confirmPassword"
             error={errors.confirmPassword?.message}
           >
@@ -100,16 +102,14 @@ export default function SettingsPage() {
           </FormField>
 
           <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? "Saving…" : "Update password"}
+            {isSubmitting ? t("settings.saving") : t("settings.updatePassword")}
           </Button>
         </form>
       </Card>
 
       <Card className="mt-6">
-        <h2 className="text-lg font-semibold text-text-primary">Sessions</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          Log out of GameSafe on every device where you&apos;re currently signed in.
-        </p>
+        <h2 className="text-lg font-semibold text-text-primary">{t("settings.sessions")}</h2>
+        <p className="mt-1 text-sm text-text-secondary">{t("settings.sessionsDescription")}</p>
         <Button
           type="button"
           variant="secondary"
@@ -117,7 +117,7 @@ export default function SettingsPage() {
           onClick={handleRevokeSessions}
           disabled={isRevoking}
         >
-          {isRevoking ? "Logging out…" : "Log out everywhere"}
+          {isRevoking ? t("settings.loggingOut") : t("settings.logoutEverywhere")}
         </Button>
       </Card>
     </div>

@@ -3,9 +3,10 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { auditLogs, moderationActions, notifications, reports, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
+import { hasRole } from "@/lib/auth/guards";
 import { applyXpDelta } from "@/lib/gamification/events";
 import { invalidateSignalCache } from "@/lib/reputation/calculate";
-import { sendReportStatusEmail } from "@/lib/resend";
+import { sendReportStatusEmail } from "@/lib/smtp";
 import { apiError, apiSuccess } from "@/lib/utils/api-response";
 
 const actionSchema = z.object({
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   const session = await auth();
   // Role is already enforced by middleware, but this route mutates data
   // directly, so it re-checks defensively rather than trusting the caller.
-  if (!session?.user || (session.user.role !== "moderator" && session.user.role !== "admin")) {
+  if (!session?.user || !hasRole(session.user.role, ["moderator", "admin"])) {
     return apiError(403, "Forbidden.");
   }
 

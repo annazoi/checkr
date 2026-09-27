@@ -2,12 +2,8 @@ import bcrypt from "bcrypt";
 import { eq, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { redis } from "@/lib/redis";
-import { sendVerificationEmail } from "@/lib/resend";
 import { registerSchema } from "@/lib/validation/schemas";
 import { apiError, apiSuccess } from "@/lib/utils/api-response";
-
-const VERIFICATION_TOKEN_TTL_SECONDS = 24 * 60 * 60;
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -40,15 +36,9 @@ export async function POST(request: Request) {
       email: normalizedEmail,
       passwordHash,
       ageVerified: true,
-      emailVerified: false,
+      emailVerified: true,
     })
     .returning({ id: users.id, email: users.email });
-
-  const token = crypto.randomUUID();
-  await redis.set(`verify:${token}`, user.id, { ex: VERIFICATION_TOKEN_TTL_SECONDS });
-
-  const verifyUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${token}`;
-  await sendVerificationEmail(user.email, verifyUrl);
 
   return apiSuccess({ email: user.email }, 201);
 }

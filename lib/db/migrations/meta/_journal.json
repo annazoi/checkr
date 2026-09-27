@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790495568712,
+      "tag": "0000_deep_joseph",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790500787686,
+      "tag": "0001_rename_r2_key_to_blob_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790503863851,
+      "tag": "0002_password_hash_nullable",
+      "breakpoints": true
+    }
+  ]
+}

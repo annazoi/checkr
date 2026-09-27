@@ -1,158 +1,173 @@
 /**
- * One-off sync: pulls the top games from IGDB into Postgres and Typesense.
+ * One-off sync: pulls games from RAWG (rawg.io) into Postgres, covering
+ * every platform (PC, PlayStation, Xbox, Switch, mobile) -- not Steam-only.
  * Run with: npx tsx scripts/sync-games.ts
  */
-import "dotenv/config";
-import { sql } from "drizzle-orm";
-import { db } from "../lib/db";
-import { games } from "../lib/db/schema";
-import {
-  ensureGamesCollection,
-  upsertGameDocument,
-  type GameDocument,
-} from "../lib/typesense";
+import { config } from "dotenv";
+import { eq, sql } from "drizzle-orm";
+import type { db as dbType } from "../lib/db";
+import type {
+  gamePlatforms as gamePlatformsType,
+  games as gamesType,
+  platforms as platformsType,
+} from "../lib/db/schema";
 
+// Plain "dotenv/config" only loads a file literally named ".env" -- .env.local
+// is a Next.js-specific convention that dotenv itself doesn't know about, so
+// it has to be pointed at explicitly for a standalone script like this one.
+// This must run BEFORE lib/db is loaded (it reads DATABASE_URL at import
+// time), which is why lib/db/schema are dynamically imported in main()
+// below instead of statically imported at the top of this file -- static
+// imports would already have run (and grabbed an empty DATABASE_URL) before
+// this config() call ever executes.
+config({ path: ".env.local" });
+
+let db: typeof dbType;
+let gamePlatforms: typeof gamePlatformsType;
+let games: typeof gamesType;
+let platforms: typeof platformsType;
+
+const RAWG_API_KEY = process.env.RAWG_API_KEY;
 const TARGET_GAME_COUNT = 10_000;
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 40; // RAWG's maximum page_size
+const REQUEST_DELAY_MS = 250; // stay comfortably under RAWG's free-tier rate limit
 
-type IgdbGame = {
+type RawgGame = {
   id: number;
-  name: string;
   slug: string;
-  summary?: string;
-  first_release_date?: number;
-  involved_companies?: Array<{
-    company?: { name?: string };
-    developer?: boolean;
-    publisher?: boolean;
-  }>;
-  platforms?: Array<{ name?: string }>;
-  cover?: { image_id?: string };
+  name: string;
+  released: string | null;
+  background_image: string | null;
+  platforms?: Array<{ platform: { id: number; name: string } }> | null;
 };
 
-async function getIgdbAccessToken(): Promise<string> {
-  const clientId = process.env.IGDB_CLIENT_ID;
-  const clientSecret = process.env.IGDB_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    throw new Error("IGDB_CLIENT_ID / IGDB_CLIENT_SECRET are not set.");
-  }
-
-  const res = await fetch(
-    `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
-    { method: "POST" },
-  );
-  if (!res.ok) throw new Error(`Failed to authenticate with IGDB: ${res.status}`);
-
-  const body = (await res.json()) as { access_token: string };
-  return body.access_token;
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchGamesPage(
-  accessToken: string,
-  offset: number,
-): Promise<IgdbGame[]> {
-  const query = `
-    fields name, slug, summary, first_release_date, cover.image_id,
-      platforms.name, involved_companies.company.name,
-      involved_companies.developer, involved_companies.publisher;
-    where category = 0 & version_parent = null;
-    sort total_rating_count desc;
-    limit ${PAGE_SIZE};
-    offset ${offset};
-  `;
+async function fetchGamesPage(page: number): Promise<RawgGame[]> {
+  const url = new URL("https://api.rawg.io/api/games");
+  url.searchParams.set("key", RAWG_API_KEY!);
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("page_size", String(PAGE_SIZE));
+  url.searchParams.set("ordering", "-added"); // most-added-to-libraries first, a decent popularity proxy
 
-  const res = await fetch("https://api.igdb.com/v4/games", {
-    method: "POST",
-    headers: {
-      "Client-ID": process.env.IGDB_CLIENT_ID!,
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "text/plain",
-    },
-    body: query,
-  });
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`RAWG request failed: ${res.status} ${await res.text()}`);
 
-  if (!res.ok) throw new Error(`IGDB request failed: ${res.status} ${await res.text()}`);
-  return res.json();
+  const body = (await res.json()) as { results: RawgGame[] };
+  return body.results;
 }
 
-function toSlug(name: string, igdbId: number) {
+function toSlug(name: string, rawgId: number) {
   const base = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return base ? `${base}-${igdbId}` : `game-${igdbId}`;
+  return base ? `${base}-${rawgId}` : `game-${rawgId}`;
 }
 
-function coverUrl(imageId?: string) {
-  return imageId ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg` : null;
+// RAWG's platform names are more granular than our UI's filter chips
+// (e.g. "PlayStation 5" vs "PlayStation 4"), so they're bucketed down to the
+// 5 canonical platforms the search page actually filters by. Anything that
+// doesn't map to one of those (old consoles, "Web", etc.) is just skipped --
+// the game still shows up everywhere except that specific platform filter.
+function normalizePlatformName(name: string): string | null {
+  const lower = name.toLowerCase();
+  if (lower === "pc" || lower === "macos" || lower === "linux") return "PC";
+  if (lower.startsWith("playstation")) return "PlayStation";
+  if (lower.startsWith("xbox")) return "Xbox";
+  if (lower.includes("nintendo switch")) return "Switch";
+  if (lower === "ios" || lower === "android") return "Mobile";
+  return null;
 }
 
-async function upsertGame(igdbGame: IgdbGame) {
-  const developer = igdbGame.involved_companies?.find((c) => c.developer)?.company?.name ?? null;
-  const publisher = igdbGame.involved_companies?.find((c) => c.publisher)?.company?.name ?? null;
-  const releaseYear = igdbGame.first_release_date
-    ? new Date(igdbGame.first_release_date * 1000).getFullYear()
-    : null;
+const platformIdCache = new Map<string, string>();
+
+async function getOrCreatePlatformId(name: string) {
+  const cached = platformIdCache.get(name);
+  if (cached) return cached;
+
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const [existing] = await db
+    .select({ id: platforms.id })
+    .from(platforms)
+    .where(eq(platforms.slug, slug))
+    .limit(1);
+
+  const platformId =
+    existing?.id ??
+    (
+      await db
+        .insert(platforms)
+        .values({ slug, name })
+        .onConflictDoUpdate({ target: platforms.slug, set: { name } })
+        .returning({ id: platforms.id })
+    )[0].id;
+
+  platformIdCache.set(name, platformId);
+  return platformId;
+}
+
+async function upsertGame(rawgGame: RawgGame) {
+  const releaseYear = rawgGame.released ? new Date(rawgGame.released).getFullYear() : null;
 
   const [row] = await db
     .insert(games)
     .values({
-      slug: toSlug(igdbGame.name, igdbGame.id),
-      title: igdbGame.name,
-      igdbId: igdbGame.id,
-      coverUrl: coverUrl(igdbGame.cover?.image_id),
-      description: igdbGame.summary ?? null,
-      developer,
-      publisher,
+      slug: toSlug(rawgGame.name, rawgGame.id),
+      title: rawgGame.name,
+      rawgId: rawgGame.id,
+      coverUrl: rawgGame.background_image,
       releaseYear,
     })
     .onConflictDoUpdate({
-      target: games.igdbId,
+      target: games.rawgId,
       set: {
-        title: igdbGame.name,
-        coverUrl: coverUrl(igdbGame.cover?.image_id),
-        description: igdbGame.summary ?? null,
-        developer,
-        publisher,
+        title: rawgGame.name,
+        coverUrl: rawgGame.background_image,
         releaseYear,
         updatedAt: sql`now()`,
       },
     })
     .returning({ id: games.id, slug: games.slug });
 
-  const document: GameDocument = {
-    id: row.id,
-    slug: row.slug,
-    title: igdbGame.name,
-    developer: developer ?? undefined,
-    releaseYear: releaseYear ?? undefined,
-    platforms: igdbGame.platforms?.map((p) => p.name).filter((n): n is string => Boolean(n)),
-    coverUrl: coverUrl(igdbGame.cover?.image_id) ?? undefined,
-    reportCount: 0,
-    hasReports: false,
-  };
+  const platformNames = new Set(
+    (rawgGame.platforms ?? [])
+      .map((p) => normalizePlatformName(p.platform?.name ?? ""))
+      .filter((n): n is string => Boolean(n)),
+  );
 
-  await upsertGameDocument(document);
+  for (const name of platformNames) {
+    const platformId = await getOrCreatePlatformId(name);
+    await db.insert(gamePlatforms).values({ gameId: row.id, platformId }).onConflictDoNothing();
+  }
 }
 
 async function main() {
-  console.log("Ensuring Typesense collection exists...");
-  await ensureGamesCollection();
+  if (!RAWG_API_KEY) throw new Error("RAWG_API_KEY is not set.");
 
-  console.log("Authenticating with IGDB...");
-  const accessToken = await getIgdbAccessToken();
+  ({ db } = await import("../lib/db"));
+  ({ gamePlatforms, games, platforms } = await import("../lib/db/schema"));
 
   let synced = 0;
-  for (let offset = 0; offset < TARGET_GAME_COUNT; offset += PAGE_SIZE) {
-    const page = await fetchGamesPage(accessToken, offset);
-    if (page.length === 0) break;
+  const totalPages = Math.ceil(TARGET_GAME_COUNT / PAGE_SIZE);
 
-    for (const igdbGame of page) {
-      await upsertGame(igdbGame);
+  for (let page = 1; page <= totalPages; page += 1) {
+    const results = await fetchGamesPage(page);
+    if (results.length === 0) break;
+
+    for (const rawgGame of results) {
+      await upsertGame(rawgGame);
       synced += 1;
     }
 
     console.log(`Synced ${synced} games so far...`);
+    await wait(REQUEST_DELAY_MS);
   }
 
   console.log(`Done. Synced ${synced} games total.`);

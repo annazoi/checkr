@@ -4,17 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HomeIcon, MagnifyingGlassIcon, PlusIcon, UserIcon } from "@heroicons/react/24/outline";
 import { HomeIcon as HomeIconSolid, MagnifyingGlassIcon as SearchIconSolid, UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils/cn";
-
-const tabs = [
-  { href: "/", label: "Home", icon: HomeIcon, activeIcon: HomeIconSolid },
-  { href: "/search", label: "Search", icon: MagnifyingGlassIcon, activeIcon: SearchIconSolid },
-  { href: "/report", label: "Report", icon: PlusIcon, activeIcon: PlusIcon, isReport: true },
-  { href: "/profile/me", label: "Profile", icon: UserIcon, activeIcon: UserIconSolid },
-];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const t = useT();
+
+  const tabs = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon, activeIcon: HomeIconSolid },
+    { href: "/search", label: t("nav.search"), icon: MagnifyingGlassIcon, activeIcon: SearchIconSolid },
+    { href: "/report", label: t("nav.report"), icon: PlusIcon, activeIcon: PlusIcon, isReport: true },
+    { href: "/profile/me", label: t("nav.profile"), icon: UserIcon, activeIcon: UserIconSolid },
+  ];
 
   if (pathname.startsWith("/admin")) return null;
 

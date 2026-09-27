@@ -27,10 +27,10 @@ function aggregateSignalLabel(sources: GameSourceWithSignal[]) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const result = await getGameWithSources(params.slug);
-  if (!result) return { title: "Game not found — GameSafe" };
+  if (!result) return { title: "Game not found — Checkr" };
 
   return {
-    title: `${result.game.title} — GameSafe`,
+    title: `${result.game.title} — Checkr`,
     description: `Community-reported safety signals for third-party stores and resellers of ${result.game.title}.`,
   };
 }

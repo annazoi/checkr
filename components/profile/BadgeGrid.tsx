@@ -1,3 +1,5 @@
+"use client";
+
 import {
   AcademicCapIcon,
   CameraIcon,
@@ -8,48 +10,28 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils/cn";
 import type { BadgeSlug } from "@/lib/gamification/badges";
+import { useLocale, useT } from "@/components/i18n/LocaleProvider";
 
-const BADGE_META: Record<BadgeSlug, { label: string; description: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }> = {
-  first_report: {
-    label: "First report",
-    description: "Submitted your first report.",
-    icon: StarIcon,
-  },
-  evidence_provider: {
-    label: "Evidence provider",
-    description: "Included evidence in a report.",
-    icon: CameraIcon,
-  },
-  trusted_signal: {
-    label: "Trusted signal",
-    description: "10+ reports marked helpful.",
-    icon: ShieldCheckIcon,
-  },
-  detail_master: {
-    label: "Detail master",
-    description: "25+ reports with a description.",
-    icon: ChatBubbleLeftRightIcon,
-  },
-  consistent_contributor: {
-    label: "Consistent contributor",
-    description: "Active contributor over time.",
-    icon: ClockIcon,
-  },
-  community_veteran: {
-    label: "Community veteran",
-    description: "A year+ on GameSafe with 10+ reports.",
-    icon: AcademicCapIcon,
-  },
+const BADGE_ICONS: Record<BadgeSlug, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+  first_report: StarIcon,
+  evidence_provider: CameraIcon,
+  trusted_signal: ShieldCheckIcon,
+  detail_master: ChatBubbleLeftRightIcon,
+  consistent_contributor: ClockIcon,
+  community_veteran: AcademicCapIcon,
 };
 
 export function BadgeGrid({ badges }: { badges: Array<{ slug: BadgeSlug; earned: boolean }> }) {
+  const { dictionary } = useLocale();
+  const t = useT();
+
   return (
     <div>
-      <h2 className="mb-3 text-lg font-semibold text-text-primary">Badges</h2>
+      <h2 className="mb-3 text-lg font-semibold text-text-primary">{t("profile.badges")}</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {badges.map(({ slug, earned }) => {
-          const meta = BADGE_META[slug];
-          const Icon = meta.icon;
+          const meta = dictionary.badges[slug];
+          const Icon = BADGE_ICONS[slug];
           return (
             <div
               key={slug}

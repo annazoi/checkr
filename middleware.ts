@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/lib/auth/config";
-import { ajGeneralLimiter, ajLoginLimiter, ajRegisterLimiter } from "@/lib/arcjet";
+import { hasRole } from "@/lib/auth/guards";
 
 const { auth } = NextAuth(authConfig);
 
@@ -28,29 +28,10 @@ function isAdminPageRoute(pathname: string) {
   return pathname.startsWith("/admin");
 }
 
-function pickLimiter(pathname: string) {
-  if (pathname.startsWith("/api/auth/register")) return ajRegisterLimiter;
-  if (pathname.startsWith("/api/auth/callback/credentials")) return ajLoginLimiter;
-  return ajGeneralLimiter;
-}
-
 export default auth(async (req) => {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
   const method = req.method;
-
-  if (pathname.startsWith("/api/")) {
-    const limiter = pickLimiter(pathname);
-    const decision = await limiter.protect(req);
-
-    if (decision.isDenied()) {
-      const status = decision.reason.isBot() ? 403 : 429;
-      return NextResponse.json(
-        { data: null, error: { message: "Too many requests. Please try again later." } },
-        { status },
-      );
-    }
-  }
 
   const isAuthed = !!req.auth;
   const role = req.auth?.user?.role;
@@ -62,7 +43,7 @@ export default auth(async (req) => {
         { status: 401 },
       );
     }
-    if (role !== "moderator" && role !== "admin") {
+    if (!hasRole(role, ["moderator", "admin"])) {
       return NextResponse.json(
         { data: null, error: { message: "Forbidden." } },
         { status: 403 },
@@ -77,7 +58,7 @@ export default auth(async (req) => {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (role !== "moderator" && role !== "admin") {
+    if (!hasRole(role, ["moderator", "admin"])) {
       return NextResponse.redirect(new URL("/", nextUrl));
     }
     return NextResponse.next();

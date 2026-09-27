@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { DiscordButton } from "@/components/auth/DiscordButton";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
@@ -34,11 +35,7 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      if (result.code === "email_not_verified") {
-        setFormError("Please verify your email before logging in. Check your inbox for the link.");
-      } else {
-        setFormError("That email or password doesn't match our records.");
-      }
+      setFormError("That email or password doesn't match our records.");
       return;
     }
 
@@ -49,7 +46,7 @@ function LoginForm() {
   return (
     <AuthCard
       eyebrow="Welcome back"
-      title="Log in to GameSafe"
+      title="Log in to Checkr"
       footer={
         <>
           New here?{" "}
@@ -86,6 +83,14 @@ function LoginForm() {
           {isSubmitting ? "Logging in…" : "Log in"}
         </Button>
       </form>
+
+      <div className="my-4 flex items-center gap-3 text-xs text-text-secondary">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <DiscordButton callbackUrl={searchParams.get("callbackUrl") ?? "/"} />
     </AuthCard>
   );
 }
