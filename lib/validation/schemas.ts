@@ -45,6 +45,18 @@ export const createSourceSchema = z.object({
 });
 export type CreateSourceInput = z.infer<typeof createSourceSchema>;
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password."),
+    newPassword: z.string().min(8, "New password must be at least 8 characters."),
+    confirmPassword: z.string().min(1, "Confirm your new password."),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ["confirmPassword"],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const createReportSchema = z.object({
   gameSourceId: z.string().uuid(),
   reportType: z.enum(reportTypeValues),

@@ -12,6 +12,10 @@ export function sessionKey(sessionId: string) {
   return `session:${sessionId}`;
 }
 
+export function userSessionsKey(userId: string) {
+  return `user-sessions:${userId}`;
+}
+
 export const authConfig = {
   session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   pages: {

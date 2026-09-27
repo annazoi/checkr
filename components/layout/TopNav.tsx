@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowRightIcon, ShieldCheckIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import { buttonClasses } from "@/components/ui/Button";
+import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { cn } from "@/lib/utils/cn";
 
 const navItems = [
@@ -49,6 +50,7 @@ export function TopNav() {
             Share experience
             <ArrowRightIcon className="ml-1.5 h-4 w-4" aria-hidden="true" />
           </Link>
+          {session && <NotificationsMenu />}
           <Link
             href={session ? "/profile/me" : "/auth/login"}
             aria-label={session ? "Your profile" : "Log in"}

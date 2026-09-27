@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { redis } from "@/lib/redis";
 import { loginSchema } from "@/lib/validation/schemas";
-import { authConfig, sessionKey, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/config";
+import { authConfig, sessionKey, userSessionsKey, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/config";
 
 // This file (and its bcrypt/Drizzle dependencies) must only be imported from
 // Node runtime contexts -- API routes and server components. middleware.ts
@@ -18,6 +18,17 @@ export class EmailNotVerifiedError extends CredentialsSignin {
 
 export async function revokeSession(sessionId: string) {
   await redis.del(sessionKey(sessionId));
+}
+
+// Used by the "log out everywhere" settings action: every login SADDs its
+// sessionId into this per-user set, so all of them can be revoked at once.
+export async function revokeAllSessions(userId: string) {
+  const key = userSessionsKey(userId);
+  const sessionIds = await redis.smembers(key);
+  if (sessionIds.length > 0) {
+    await Promise.all(sessionIds.map((id) => redis.del(sessionKey(id))));
+  }
+  await redis.del(key);
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -52,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await redis.set(sessionKey(sessionId), user.id, {
           ex: SESSION_MAX_AGE_SECONDS,
         });
+        await redis.sadd(userSessionsKey(user.id), sessionId);
 
         return {
           id: user.id,
