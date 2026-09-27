@@ -86,7 +86,10 @@ export default async function GamePage({ params }: PageProps) {
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-text-primary">Sources discussed</h2>
               {session ? (
-                <Link href="/report" className="text-sm font-medium text-accent-light">
+                <Link
+                  href={`/report?game=${game.slug}`}
+                  className="text-sm font-medium text-accent-light"
+                >
                   + Add a source
                 </Link>
               ) : null}
@@ -135,7 +138,10 @@ export default async function GamePage({ params }: PageProps) {
             </div>
 
             {session ? (
-              <Link href="/report" className={`${buttonClasses({ variant: "primary" })} mt-5 w-full`}>
+              <Link
+                href={`/report?game=${game.slug}`}
+                className={`${buttonClasses({ variant: "primary" })} mt-5 w-full`}
+              >
                 Report your experience
               </Link>
             ) : (

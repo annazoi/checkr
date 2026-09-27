@@ -21,3 +21,35 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Enter your password."),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const reportTypeValues = [
+  "no_issue",
+  "suspicious",
+  "malware",
+  "suspicious_installer",
+  "fake_content",
+  "dangerous_redirect",
+  "unexpected_software",
+  "antivirus_warning",
+  "other",
+] as const;
+
+export const createSourceSchema = z.object({
+  gameSlug: z.string().min(1),
+  domain: z
+    .string()
+    .trim()
+    .min(3, "Enter the site or store you visited.")
+    .max(255)
+    .transform((value) => value.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "")),
+});
+export type CreateSourceInput = z.infer<typeof createSourceSchema>;
+
+export const createReportSchema = z.object({
+  gameSourceId: z.string().uuid(),
+  reportType: z.enum(reportTypeValues),
+  confidenceLevel: z.enum(["low", "medium", "high"]).optional().default("medium"),
+  description: z.string().max(500).optional(),
+  evidenceId: z.string().uuid().optional(),
+});
+export type CreateReportInput = z.infer<typeof createReportSchema>;
