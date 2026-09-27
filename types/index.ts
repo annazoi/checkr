@@ -45,7 +45,9 @@ export type SignalProfile = {
   noIssuePercent: number;
   concernPercent: number;
   recency: "active" | "recent" | "older" | "historical";
-  lastReportAt: Date | null;
+  // ISO 8601 string, not Date: this value is cached in Redis and shipped to
+  // the client as JSON, and Date instances don't survive either round-trip.
+  lastReportAt: string | null;
   hasEvidence: boolean;
   evidenceCount: number;
   signalLabel: SignalLabelType;
